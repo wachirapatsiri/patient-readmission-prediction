@@ -15,3 +15,5 @@ High hospital readmission rates strain healthcare resources and impact the quali
 ## 📈 Key Results
 * Successfully identified key clinical factors driving readmissions, such as length of stay and the number of prescribed medications.
 * Deployed a functional prototype that translates complex predictive algorithms into an actionable, user-friendly tool for healthcare professionals.
+
+## Web : https://patient-readmission-prediction-wachirapat.streamlit.app/
