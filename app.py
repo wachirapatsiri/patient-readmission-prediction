@@ -6,7 +6,7 @@ import joblib
 # 1. โหลดโมเดลและ Scaler (ใช้ @st.cache_resource เพื่อไม่ให้โหลดใหม่ทุกครั้งที่กดปุ่ม)
 @st.cache_resource
 def load_resources():
-    model = joblib.load('diabetes_rf_model.joblib')
+    model = joblib.load('diabetes_hgb_model.joblib')
     scaler = joblib.load('diabetes_scaler.joblib')
     return model, scaler
 
