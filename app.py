@@ -1,49 +1,65 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 
-# 1. โหลดโมเดลและ Scaler (ใช้ @st.cache_resource เพื่อไม่ให้โหลดใหม่ทุกครั้งที่กดปุ่ม)
+# 1. โหลดโมเดล
 @st.cache_resource
 def load_resources():
     model = joblib.load('diabetes_hgb_model.joblib')
-    scaler = joblib.load('diabetes_scaler.joblib')
-    return model, scaler
+    return model
 
-model, scaler = load_resources()
+model = load_resources()
 
-# 2. ตั้งค่าหน้าเว็บ
-st.set_page_config(page_title="Patient Risk Assessment", layout="centered")
-st.title("🏥 Patient Readmission Risk Assessment")
-st.markdown("เครื่องมือประเมินความเสี่ยงการกลับมาแอดมิทซ้ำของผู้ป่วยโรคเบาหวาน (ภายใน 30 วัน)")
+st.markdown("### 🩺 เครื่องมือประเมินความเสี่ยงการกลับมาแอดมิทซ้ำ (ภายใน 30 วัน)")
 
-# 3. สร้างฟอร์มรับข้อมูลจากผู้ใช้ (ดึงมาจาก Top Features ของโมเดลคุณ)
+# 2. วาง Dictionary ค่าเฉลี่ย 42 คอลัมน์ (เอาผลลัพธ์ที่ก๊อปปี้จากสเต็ป 1 มาวางตรงนี้ทั้งหมด)
+default_patient = {
+    "time_in_hospital": 4.0,
+    "num_medications": 15.0,
+    "previous_visits": 0.0,
+    "diabetesMed": 1.0,
+    "insulin_No": 1.0,
+    "insulin_Steady": 0.0
+    # ... (ต้องใส่ให้ครบ 42 บรรทัดตาม X_train.columns เป๊ะๆ) ...
+}
+
+# 3. สร้างช่องรับค่าจากผู้ใช้ (เฉพาะตัวที่สำคัญ)
 st.sidebar.header("📝 กรอกข้อมูลทางคลินิก")
-time_in_hospital = st.sidebar.slider("ระยะเวลาที่อยู่ รพ. (วัน)", 1, 14, 3)
-num_medications = st.sidebar.slider("จำนวนยาที่ได้รับ", 1, 80, 15)
-number_diagnoses = st.sidebar.slider("จำนวนการวินิจฉัยโรค", 1, 16, 5)
 
-st.write("### ข้อมูลผู้ป่วยเบื้องต้น")
-st.write(f"- **ระยะเวลาที่พักรักษาตัว:** {time_in_hospital} วัน")
-st.write(f"- **จำนวนยา:** {num_medications} ชนิด")
-st.write(f"- **จำนวนการวินิจฉัย:** {number_diagnoses} รายการ")
+user_prev_visits = st.sidebar.number_input("จำนวนครั้งที่เคยมา รพ. (previous_visits)", min_value=0, max_value=50, value=0)
+user_time_hosp = st.sidebar.slider("ระยะเวลาที่พักรักษาตัว (time_in_hospital)", min_value=1, max_value=14, value=3)
+user_diabetes_med = st.sidebar.selectbox("ได้รับยารักษาเบาหวานหรือไม่? (diabetesMed)", ["Yes", "No"])
+user_insulin = st.sidebar.selectbox("การใช้ Insulin", ["ไม่ใช้ (No)", "ใช้ปริมาณคงที่ (Steady)", "ปรับปริมาณขึ้น/ลง (Up/Down)"])
 
-# 4. ปุ่มกดทำนายผล
 if st.button("🔍 ประเมินความเสี่ยง", type="primary"):
-    # หมายเหตุ: ในการทำนายจริง โมเดลคุณต้องการข้อมูลครบทั้ง 42 คอลัมน์ตาม X_train
-    # โค้ดส่วนนี้เป็นการจำลอง (Mock-up) เพื่อโชว์ UI ให้ HR เห็นภาพ
     
-    # สมมติการคำนวณผลลัพธ์
-    risk_score = np.random.uniform(0.3, 0.8) # สุ่มค่าความเสี่ยงจำลอง
+    # 4. นำค่าที่ผู้ใช้กรอก ไปเขียนทับค่า Default
+    default_patient['previous_visits'] = user_prev_visits
+    default_patient['time_in_hospital'] = user_time_hosp
+    default_patient['diabetesMed'] = 1.0 if user_diabetes_med == "Yes" else 0.0
     
-    st.markdown("---")
-    st.subheader("📊 ผลการประเมิน")
-    
-    if risk_score > 0.5:
-        st.error(f"🚨 **ความเสี่ยงสูง (High Risk)**")
-        st.write(f"ผู้ป่วยมีโอกาสกลับมาแอดมิทซ้ำ: **{risk_score*100:.1f}%**")
-        st.write("👉 *คำแนะนำ: ควรจัดโปรแกรมติดตามอาการที่บ้านอย่างใกล้ชิด (Home Care Follow-up)*")
+    # จัดการตัวแปร Dummy ของ Insulin
+    if user_insulin == "ไม่ใช้ (No)":
+        default_patient['insulin_No'] = 1.0
+        default_patient['insulin_Steady'] = 0.0
+    elif user_insulin == "ใช้ปริมาณคงที่ (Steady)":
+        default_patient['insulin_No'] = 0.0
+        default_patient['insulin_Steady'] = 1.0
     else:
-        st.success(f"✅ **ความเสี่ยงต่ำ (Low Risk)**")
-        st.write(f"ผู้ป่วยมีโอกาสกลับมาแอดมิทซ้ำ: **{risk_score*100:.1f}%**")
-        st.write("👉 *คำแนะนำ: ดำเนินการจำหน่ายผู้ป่วยตามมาตรฐานปกติ*")
+        default_patient['insulin_No'] = 0.0
+        default_patient['insulin_Steady'] = 0.0
+
+    # 5. แปลงเป็น DataFrame 1 แถว เพื่อส่งให้โมเดลทำนาย
+    input_df = pd.DataFrame([default_patient])
+    
+    # 6. ทำนายผลความน่าจะเป็น (Probability)
+    risk_score = model.predict_proba(input_df)[0, 1]
+    
+    # 7. แสดงผลลัพธ์จริง
+    st.subheader("📊 ผลการประเมิน")
+    if risk_score > 0.5:
+        st.error(f"🚨 **ความเสี่ยงสูง (High Risk)** - โอกาสแอดมิทซ้ำ: {risk_score*100:.1f}%")
+        st.write("👉 คำแนะนำ: ควรจัดเตรียมทีมแพทย์เพื่อติดตามอาการใกล้ชิด (Home Care Follow-up)")
+    else:
+        st.success(f"✅ **ความเสี่ยงต่ำ (Low Risk)** - โอกาสแอดมิทซ้ำ: {risk_score*100:.1f}%")
+        st.write("👉 คำแนะนำ: ดำเนินการจำหน่ายผู้ป่วยตามมาตรฐานปกติ")
