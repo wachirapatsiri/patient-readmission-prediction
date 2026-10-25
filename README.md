@@ -19,5 +19,6 @@ High hospital readmission rates strain healthcare resources and impact the quali
 ## Web : https://patient-readmission-prediction-wachirapat.streamlit.app/
 
 ## 💻 Live Demo & UI
-<img width="1450" height="765" alt="image" src="https://github.com/user-attachments/assets/2a30a18c-2dc1-4409-85d6-f8e58ed8eebb" />
+<img width="1443" height="767" alt="image" src="https://github.com/user-attachments/assets/28fb1bcb-68db-4630-9811-6034ee106a3b" />
+
 
