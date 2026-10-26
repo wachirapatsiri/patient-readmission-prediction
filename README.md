@@ -1,23 +1,53 @@
-# 🏥 Patient Readmission Prediction & Risk Assessment
+# Patient Readmission Risk Prediction
 
-## 📌 Project Overview
-An end-to-end machine learning pipeline and web application designed to predict the likelihood of hospital readmission for diabetes patients within 30 days.
+Predicting 30-day hospital readmission for diabetic patients, with a calibrated risk score served through a Streamlit app.
 
-## 🎯 Business Problem
-High hospital readmission rates strain healthcare resources and impact the quality of patient care. Identifying high-risk patients early allows healthcare providers to allocate resources effectively, optimize operational costs, and provide targeted follow-up care to those who need it most.
+**Live demo:** [patient-readmission-prediction-wachirapat.streamlit.app](https://patient-readmission-prediction-wachirapat.streamlit.app/)
 
-## 🛠️ Solution & Action (Tech Stack: Python, Scikit-Learn, HistGradientBoosting, Streamlit)
-* **Data Engineering:** Processed the complex Diabetes-130-Hospitals dataset (**81K** records) by handling missing values and engineering new variables (Log transformations, Polynomial features).
-* **Rigorous Model Selection:** Instead of blindly relying on a single algorithm, I established a baseline using Logistic Regression and compared it against Random Forest (with and without SMOTE) and HistGradientBoosting.
-* **Tackling Class Imbalance:** My experiments revealed that synthetic oversampling (SMOTE) actually degraded performance on this highly categorical dataset due to overlapping noise. I successfully addressed the imbalance by using native `class_weight="balanced"` and tuning tree complexity.
-* **Deployment:** Selected the best-performing model (HistGradientBoosting) and deployed it as an interactive Streamlit web application for real-time clinical risk assessment.
+## Problem
+About 11% of diabetic patient encounters in this dataset are readmitted within 30 days. Flagging likely readmissions at discharge can help hospitals prioritize follow-up care.
 
-## 📈 Key Results
-* **HistGradientBoosting** emerged as the top performer, achieving an **ROC-AUC of 0.641** and a **PR-AUC of 0.177**, significantly outperforming the initial SMOTE approach (ROC-AUC 0.586).
-* Gained a crucial technical insight: Advanced gradient boosting combined with strategic hyperparameter tuning is often more robust than data-level resampling (SMOTE) for complex healthcare datasets.
-* Deployed a functional, real-time prototype that translates complex predictive algorithms into an actionable, user-friendly tool for healthcare professionals.
+## Data
+- [Diabetes 130-US Hospitals (1999–2008)](https://archive.ics.uci.edu/dataset/296/diabetes+130-us+hospitals+for+years+1999-2008), ~101.8K encounters
+- Target: readmitted within 30 days (positive rate 11.2%)
+- Stratified 80/20 train/test split
 
-## Web : https://patient-readmission-prediction-wachirapat.streamlit.app/
+## Approach
+1. Cleaned missing values, grouped rare categories, one-hot encoded categorical features, scaled numeric features (fit on train only).
+2. Compared ways to handle class imbalance. In this experiment, SMOTE lowered ROC-AUC (0.586) compared with class weighting (0.640).
+3. Selected the model with 5-fold cross-validation on the training set only.
+4. Calibrated probabilities (isotonic) and chose the decision threshold on a held-out validation set.
+5. Evaluated once on the test set.
+
+## Results
+
+| Model (5-fold CV on train) | ROC-AUC |
+|---|---|
+| Logistic Regression (baseline) | 0.627 ± 0.003 |
+| Random Forest | 0.629 ± 0.002 |
+| HistGradientBoosting | 0.628 ± 0.004 |
+
+All three models performed similarly. HistGradientBoosting was selected and calibrated.
+
+**Final model on the test set (threshold 0.12, chosen on validation):**
+- ROC-AUC 0.64, PR-AUC 0.177 (base rate 0.112)
+- Recall 0.60, Precision 0.158, about 1.4× the base rate
+- Mean predicted probability 0.112, matching the observed rate after calibration
+
+**Top predictors (permutation importance):** number of previous visits, insulin usage, discharge disposition.
+
+## Limitations
+- Moderate discriminative power (ROC-AUC ~0.64), consistent with the difficulty of this problem.
+- At this threshold about 42% of patients are flagged, so the model suits screening, not individual decisions.
+- This dataset version has no patient ID, so the split could not be grouped by patient.
+- Educational project. Not intended for clinical use.
+
+## Run locally
+    pip install -r requirements.txt
+    streamlit run app.py
+
+## Tech stack
+Python, pandas, scikit-learn, imbalanced-learn, Streamlit
 
 ## 💻 Live Demo & UI
 <img width="1443" height="767" alt="image" src="https://github.com/user-attachments/assets/28fb1bcb-68db-4630-9811-6034ee106a3b" />
