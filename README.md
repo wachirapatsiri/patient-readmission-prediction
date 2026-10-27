@@ -17,6 +17,7 @@ About 11% of diabetic patient encounters in this dataset are readmitted within 3
 - [Diabetes 130-US Hospitals (1999-2008)](https://www.openml.org/d/43874), OpenML version: about 101.8K encounters.
 - Target: readmitted within 30 days (positive rate about 11%).
 - Alternative encodings of the target (`readmitted`, `readmit_binary`) are dropped as leakage.
+- Source: Strack et al. (2014), "Impact of HbA1c Measurement on Hospital Readmission Rates", BioMed Research International.
 
 ## Approach
 
@@ -102,3 +103,4 @@ Keep `scikit-learn` in `requirements.txt` at the version printed by the last not
 ## Tech stack
 
 Python, pandas, scikit-learn, imbalanced-learn, Streamlit
+
