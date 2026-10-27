@@ -4,7 +4,7 @@ Predicting 30-day hospital readmission for diabetic patients, with a calibrated 
 
 **Live demo:** [patient-readmission-prediction-wachirapat.streamlit.app](https://patient-readmission-prediction-wachirapat.streamlit.app)
 
-<!-- Add an app screenshot here: ![App screenshot](assets/app_screenshot.png) -->
+![App screenshot](assets/app_screenshot.png)
 
 > Educational project. Not a medical device and not intended for clinical use.
 
@@ -53,19 +53,20 @@ SMOTE lowered both scores; the final model uses no resampling and no class weigh
 
 **Final model on the held-out test set** (threshold 0.12, chosen on validation):
 
-- ROC-AUC about 0.65 (95% CI 0.64-0.66), PR-AUC about 0.18 (base rate 0.11)
-- Recall about 0.61 at precision about 0.165 (roughly 1.5× the base rate)
-- About 41% of patients are flagged at this threshold
-- Mean predicted probability matches the observed rate (0.112), and the reliability curve follows the diagonal (`assets/calibration.png`)
+- ROC-AUC 0.651 (95% CI 0.640-0.662) and PR-AUC 0.183 (95% CI 0.172-0.196), against a base rate of 0.112
+- At threshold 0.120: recall 60.6% and precision 16.5% (1.48× the base rate); 40.9% of patients are flagged
+- Calibration: mean predicted probability 0.112 matches the observed rate of 0.112, and the reliability curve follows the diagonal (`assets/calibration.png`). Brier score is 0.0963, versus 0.0991 for predicting the base rate for everyone.
+- Isotonic calibration barely changed the Brier score (0.0963 vs 0.0964 uncalibrated): gradient boosting without class weights was already close to calibrated. Calibration is kept as a verified safeguard, not as a source of accuracy.
 
-The exact values are in `assets/metrics.json`.
+All values are in `assets/metrics.json`.
 
 **What the model relies on** (permutation importance, drop in ROC-AUC): a prior inpatient stay is by far the strongest input, followed by non-home discharge disposition; every other input contributes less (`assets/feature_importance.png`).
 
 ## Limitations
 
-- Moderate discriminative power (ROC-AUC about 0.65), consistent with how hard this problem is; the model suits screening and prioritisation, not individual decisions.
-- About 41% of patients are flagged at the chosen threshold, and precision is only about 1.5× the base rate.
+- Moderate discriminative power (ROC-AUC 0.65), consistent with how hard this problem is; the model suits screening and prioritisation, not individual decisions.
+- 40.9% of patients are flagged at the chosen threshold, and precision (16.5%) is only 1.48× the base rate, so most flags are false alarms.
+- The probabilities are well calibrated on average, but calibration does not make the model more discriminative.
 - This dataset version has no patient ID, so splits could not be grouped by patient; scores may be slightly optimistic.
 - Discharge disposition is pre-grouped into "Home" and "Other", so expired and hospice encounters (excluded in the original study) cannot be removed.
 - US hospitals, 1999-2008; practice patterns have changed.
