@@ -104,3 +104,11 @@ Keep `scikit-learn` in `requirements.txt` at the version printed by the last not
 
 Python, pandas, scikit-learn, imbalanced-learn, Streamlit
 
+## Team
+
+Team project with 5 members:
+- Wachirapat Siriphontangman (repository maintainer)
+- Robert Jiratthanan Mairaes
+- Nichaphat Khoksi
+- Kankawee Kanthawongwan
+- Sarun Duangchuen
