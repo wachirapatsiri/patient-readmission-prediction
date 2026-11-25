@@ -1,8 +1,6 @@
-"""Shared preprocessing for the patient-readmission project.
+"""Shared preprocessing, used by both the notebook and the Streamlit app.
 
-Used by BOTH the training notebook and the Streamlit app, so the two can never
-drift apart. The notebook imports this module, and the saved joblib artifact
-pickles `FeatureBuilder` by reference to it -> keep this file next to app.py.
+The saved joblib model refers to `FeatureBuilder` here, so keep this file next to app.py.
 """
 from __future__ import annotations
 
@@ -12,9 +10,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-# --------------------------------------------------------------------------- #
 # Column definitions
-# --------------------------------------------------------------------------- #
 TARGET = "readmit_30_days"
 
 # Alternative target encodings of the same outcome -> would leak the answer.
@@ -67,19 +63,16 @@ ENGINEERED_NUMERIC_COLS = [
 ]
 
 
-# --------------------------------------------------------------------------- #
-# Deterministic cleaning (nothing here is learned from data -> safe before split)
-# --------------------------------------------------------------------------- #
+# Cleaning (nothing learned from data, so safe before the split)
 def _strip_quotes(value):
     """OpenML stores some labels as "'Over 60 years'" (with literal quotes)."""
     return value.strip("'") if isinstance(value, str) else value
 
 
 def clean_raw(df: pd.DataFrame) -> pd.DataFrame:
-    """Drop leakage columns, resolve hidden missing values, encode binary flags.
+    """Drop leakage columns, fix hidden missing values, encode binary flags.
 
-    Idempotent: calling it on already-cleaned data (e.g. one row built by the
-    app, with 0/1 flags) returns the same values.
+    Safe to call on already-cleaned data (e.g. the one-row frame the app builds).
     """
     out = df.drop(columns=LEAKAGE_COLS, errors="ignore").copy()
 
@@ -111,15 +104,9 @@ def clean_raw(df: pd.DataFrame) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
-# --------------------------------------------------------------------------- #
-# Learned feature engineering (fit on TRAIN only, via Pipeline)
-# --------------------------------------------------------------------------- #
+# Feature engineering (fit on train only, via Pipeline)
 class FeatureBuilder(BaseEstimator, TransformerMixin):
-    """Clip length of stay, then build derived numeric features.
-
-    The clipping cap is learned in `fit`, so it comes from the training data
-    only (no test-set leakage).
-    """
+    """Clip length of stay, then build derived numeric features (cap learned in fit)."""
 
     def __init__(self, clip_quantile: float = 0.99):
         self.clip_quantile = clip_quantile

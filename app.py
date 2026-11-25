@@ -1,8 +1,4 @@
-"""Streamlit demo: 30-day readmission risk for diabetic patients.
-
-Loads one artifact (models/readmission_model.joblib) that contains the full
-pipeline, so the app applies exactly the same preprocessing as the notebook.
-"""
+"""Streamlit demo: 30-day readmission risk for diabetic patients."""
 from pathlib import Path
 
 import joblib
@@ -45,9 +41,7 @@ if bundle.get("sklearn_version") != sklearn.__version__:
         f"{sklearn.__version__}. Pin the training version in requirements.txt."
     )
 
-# --------------------------------------------------------------------------- #
-# Input widgets (sidebar). Widget keys equal column names so reset can set them.
-# --------------------------------------------------------------------------- #
+# Sidebar inputs (widget keys = column names, so reset can set them)
 LABELS = {
     "age": "Age group",
     "gender": "Gender",
@@ -79,8 +73,7 @@ def reset_inputs():
         st.session_state[col] = bool(value) if col in BINARY_COLS else value
 
 
-# Initial values live in session state (set once), so widgets take no default argument
-# and "reset" can simply overwrite the same keys.
+# initial values go in session state so reset can overwrite the same keys
 for _col, _value in defaults.items():
     st.session_state.setdefault(_col, bool(_value) if _col in BINARY_COLS else _value)
 
@@ -126,16 +119,12 @@ with st.sidebar.expander("Prior visits and insurance"):
     for col in ["had_inpatient_days", "had_emergency", "had_outpatient_days", "medicare", "medicaid"]:
         flag(st, col)
 
-# --------------------------------------------------------------------------- #
 # Prediction
-# --------------------------------------------------------------------------- #
 row = pd.DataFrame([inputs])[feature_columns]
 risk = float(model.predict_proba(row)[0, 1])
 flagged = risk >= threshold
 
-# --------------------------------------------------------------------------- #
 # Page
-# --------------------------------------------------------------------------- #
 st.title("🏥 30-Day Readmission Risk Estimator")
 st.caption("Diabetic inpatient encounters · calibrated gradient-boosting model · Diabetes 130-US Hospitals data")
 st.warning("Educational project. Not a medical device and not intended for clinical decisions.", icon="⚠️")
